@@ -1,0 +1,45 @@
+<!--
+ * @Author: your name
+ * @Date: 2022-04-11 15:40:18
+ * @LastEditTime: 2022-04-12 15:46:03
+ * @LastEditors: Please set LastEditors
+ * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @FilePath: \recorddemo\src\components\test.html
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <svg version="1.1" id="container" width="1000" height="840" style="border:1px solid #000;" xmlns:svg="http://www.w3.org/2000/svg" xml:space="preserve" >
+        <g id="lines" stroke="#000" stroke-width="3" fill="none">
+            <path stroke-miterlimit="10" d="" id="moveLine" />
+            <path stroke-miterlimit="10" d="" />
+        </g>
+    </svg>
+    <script>
+        var lineD;
+        container.onmousedown=function(e){
+            var beginX = e.offsetX;
+            var beginY = e.offsetY;
+            if(lines.lastElementChild.getAttribute('d')==''){
+                lineD = 'M'+beginX+ ' '+beginY;
+            }else{
+                lineD +=' L'+beginX+' '+beginY;
+            }
+            lines.lastElementChild.setAttribute('d',lineD);
+            container.onmousemove=function(ev){
+                var moveX = ev.offsetX;
+                var moveY = ev.offsetY;
+                var move ='M'+beginX+' '+beginY+' L'+moveX+' '+moveY;
+                moveLine.setAttribute('d',move);
+            }
+            console.log()
+        }
+    </script>
+</body>
+</html>
