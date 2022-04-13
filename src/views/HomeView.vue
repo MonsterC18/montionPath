@@ -1,37 +1,55 @@
 <!--
  * @Author: your name
  * @Date: 2022-04-08 16:28:21
- * @LastEditTime: 2022-04-12 15:40:58
+ * @LastEditTime: 2022-04-13 16:23:44
  * @LastEditors: Please set LastEditors
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: \recorddemo\src\views\HomeView.vue
 -->
 <template>
-  <div class="home">
+  <div id="home">
     <div class="button_wrap">
       <button @click="controlMove('move')">移动</button>
       <!-- <button @click="controlMove('pause')">暂停</button> -->
       <button @click="controlMove('restart')">重新播放</button>
       <!-- <button @click="controlMove('reverse')">逆转播放</button> -->
       <button @click="clearDraw">清空画布</button>
+      <button @click="lineDraw">折现画图</button>
+      <button @click="onlyLineDraw">直线画图</button>
+      <button @click="addDom">添加</button>
+      <button @click="complete">完成</button>
     </div>
 
-    <div id="app" class="app">
-      <svg
-        version="1.1"
-        id="container"
-        width="1000"
-        height="840"
-        style="border: 1px solid #000"
-        xmlns:svg="http://www.w3.org/2000/svg"
-        xml:space="preserve"
-      >
-        <g id="lines" stroke="#4af" stroke-width="2" fill="none">
-          <path stroke="#4af" stroke-dasharray="20" stroke-miterlimit="5" d="" id="moveLine" />
-          <path stroke="#4af" stroke-dasharray="20" stroke-miterlimit="5" d="" id="rocket-path" />
-        </g>
-      </svg>
-      <svg
+    <div id="svg_wrap">
+      <div id="svg_content">
+        <!-- 折线画布 -->
+        <svg
+          version="1.1"
+          id="container"
+          :style="svg_wrap_style"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xml:space="preserve"
+        >
+          <g id="lines" stroke="#4af" stroke-width="2" fill="none">
+            <path
+              stroke="#4af"
+              stroke-dasharray="20"
+              stroke-miterlimit="5"
+              d=""
+              id="moveLine"
+            />
+            <path
+              stroke="#4af"
+              stroke-dasharray="20"
+              stroke-miterlimit="5"
+              d=""
+              id="rocket-path"
+            />
+          </g>
+        </svg>
+      </div>
+
+      <!-- <svg
         id="rocket"
         x="0"
         y="0"
@@ -127,7 +145,7 @@
             d="M37.072,34.196l-0.0002,0c-2.4156,1.2183-4.6724,2.7626-6.6996,4.5844c-2.0849,1.8911-3.9,4.0556-5.3844,6.4211 c-0.5039,0.8031-0.9684,1.6273-1.3917,2.4694"
           />
         </g>
-      </svg>
+      </svg> -->
     </div>
   </div>
 </template>
@@ -140,9 +158,16 @@ export default {
   data() {
     return {
       lines: "",
+      svg_wrap_style:{border:'1px solid #000',position:'relative' , top:0 , left:0} ,
+      svgFlag: false,
     };
   },
   methods: {
+    addPath() {
+      let dom = document.getElementById("test");
+      dom.style.offsetPath = 'path("M172 68 L536 91")';
+      console.log(dom);
+    },
     /**
      * @description: 动画移动
      * @param {*}
@@ -158,19 +183,22 @@ export default {
 
     controlMove(mode) {
       let judgeDom = document.getElementById("rocket-path");
-      if (judgeDom.getAttribute("d") == '') {
+      if (judgeDom.getAttribute("d") == "") {
         return alert("没有路径");
       }
       //创建移动实例
-
-      const gsapMove = gsap.to("#rocket", {
-        duration: judgeDom.getTotalLength()/500,
+      let _this = this;
+      const gsapMove = gsap.to("#adddom", {
+        duration: judgeDom.getTotalLength() / 500,
         repeat: 0,
         motionPath: {
           path: "#rocket-path",
           align: "#rocket-path",
           autoRotate: false,
           alignOrigin: [0.5, 0.5],
+        },
+        onComplete: function () {
+          _this.clearDraw();
         },
       });
       console.log(gsapMove);
@@ -180,11 +208,9 @@ export default {
           gsapMove.play();
           break;
         case "pause":
-          console.log(123);
           gsapMove.pause();
           break;
         case "restart":
-          console.log(123);
           gsapMove.restart();
           break;
         case "reverse":
@@ -201,42 +227,144 @@ export default {
      * @return {*}
      */
     clearDraw() {
-      let dom = document.querySelector("#lines");
-      let domChild = dom.childNodes;
-      for (let node of domChild) {
-        node.setAttribute("d", "");
-      }
+      // let dom = document.querySelector("#lines");
+      // let domChild = dom.childNodes;
+      // for (let node of domChild) {
+      //   node.setAttribute("d", "");
+      // }
+      let lines = document.getElementById("rocket-path");
+      lines.setAttribute("d", "");
+      moveLine.setAttribute("d", "");
+    },
+
+    /**
+     * @description: 添加dom
+     * @param {*}
+     * @return {*}
+     */
+    addDom() {
+      let dom = document.createElement("div");
+      dom.setAttribute("id", "adddom");
+      dom.style.width = "100px";
+      dom.style.height = "100px";
+      dom.style.backgroundColor = "red";
+      dom.style.position = "absolute";
+      dom.style.top = "50%";
+      dom.style.left = "50%";
+      dom.style.transform = "translate(-50% , -50%)";
+      console.log(dom);
+      const svg_wrap = document.getElementById("svg_wrap");
+      svg_wrap.appendChild(dom);
+    },
+    /**
+     * @description: 直线画图
+     * @param {*}
+     * @return {*}
+     */
+    onlyLineDraw(){
+      gsap.registerPlugin(MotionPathPlugin);
+      //定义动态svg最小的宽高
+      let minWidth = 0 , minHeight = 0;
+      //创建画图
+      let addDomPosition = document.getElementById("adddom"); //元素位置
+      let svg_content = document.getElementById('svg_content'); //svg容器
+      svg_content.style.position = 'absolute';
+      svg_content.style.top = parseInt(addDomPosition.offsetTop)-60+'px';
+      svg_content.style.left = parseInt(addDomPosition.offsetLeft)-60+'px';
+      const container = document.getElementById("container");
+      container.setAttribute('width',addDomPosition.offsetWidth + 20);
+      container.setAttribute('height',addDomPosition.offsetHeight + 20);
+      let lineD;
+      container.onmousedown = function (e) {
+        let beginX = e.offsetX;
+        let beginY = e.offsetY;
+        if (lines.lastElementChild.getAttribute("d") == "") {
+          lineD = "M" + beginX + " " + beginY;
+        } else {
+          lineD += " L" + beginX + " " + beginY;
+        }
+        lines.lastElementChild.setAttribute("d", lineD);
+        container.onmousemove = function (ev) {
+          let changeWidth = parseInt(container.getAttribute('width'))+ev.movementX;
+          let changeHeight = parseInt(container.getAttribute('height'))+ev.movementY;
+          container.setAttribute('width',changeWidth > minWidth ?  changeWidth : minWidth);
+          container.setAttribute('height',changeHeight > minHeight ? changeHeight : minHeight);
+          let moveX = ev.offsetX;
+          let moveY = ev.offsetY;
+          let move = "M" + beginX + " " + beginY + " L" + moveX + " " + moveY;
+          moveLine.setAttribute("d", move);
+        };
+        container.onmouseup = function (e) {
+          lineD += " L" + e.offsetX + " " + e.offsetY;
+          lines.lastElementChild.setAttribute("d", lineD);
+          minWidth = parseInt(container.getAttribute('width'));
+          minHeight = parseInt(container.getAttribute('height'));
+          container.onmousemove = null;
+        };
+      };
+    },
+    /**
+     * @description: 链接线画图
+     * @param {*}
+     * @return {*}
+     */
+    lineDraw() {
+      this.clearDraw();
+      gsap.registerPlugin(MotionPathPlugin);
+      //创建画图
+      let addDomPosition = document.getElementById("adddom").getBoundingClientRect(); //元素位置
+      let svg_content = document.getElementById('svg_content'); //svg容器
+      svg_content.style.height = '100%';
+      svg_content.style.width = '100%';
+      const container = document.getElementById("container");
+      
+      container.setAttribute('width',svg_content.offsetWidth);
+      container.setAttribute('height',svg_content.offsetHeight);
+      const rocket = document.getElementById("rocket");
+      let lineD;
+      container.onmousedown = function (e) {
+
+        if (lines.lastElementChild.getAttribute("d") == "") {
+          //只能从dom元素周围作为起点
+          if (
+            e.offsetX <
+              addDomPosition.offsetLeft - addDomPosition.offsetWidth / 2 - 10 ||
+            e.offsetX >
+              addDomPosition.offsetLeft + addDomPosition.offsetWidth / 2 + 10 ||
+            e.offsetY <
+              addDomPosition.offsetTop - addDomPosition.offsetHeight / 2 - 10 ||
+            e.offsetY >
+              addDomPosition.offsetTop + addDomPosition.offsetHeight / 2 + 10
+          ) {
+            console.log(11);
+            return;
+          }
+        }
+        let beginX = e.offsetX;
+        let beginY = e.offsetY;
+        if (lines.lastElementChild.getAttribute("d") == "") {
+          lineD = "M" + beginX + " " + beginY;
+        } else {
+          lineD += " L" + beginX + " " + beginY;
+        }
+        lines.lastElementChild.setAttribute("d", lineD);
+        container.onmousemove = function (ev) {;
+          let moveX = ev.offsetX;
+          let moveY = ev.offsetY;
+          let move = "M" + beginX + " " + beginY + " L" + moveX + " " + moveY;
+          moveLine.setAttribute("d", move);
+        };
+        container.onmouseup = function (e) {
+          lineD += " L" + e.offsetX + " " + e.offsetY;
+          lines.lastElementChild.setAttribute("d", lineD);
+          container.onmousemove = null;
+        };
+      };
     },
   },
 
   mounted() {
-    gsap.registerPlugin(MotionPathPlugin);
-    //创建画图
-    const _this = this;
-    const container = document.getElementById("container");
-    const rocket = document.getElementById("rocket");
-    let lineD;
-    container.onmousedown = function (e) {
-      let beginX = e.offsetX;
-      let beginY = e.offsetY;
-      if (lines.lastElementChild.getAttribute("d") == "") {
-        lineD = "M" + beginX + " " + beginY;
-      } else {
-        lineD += " L" + beginX + " " + beginY;
-      }
-      lines.lastElementChild.setAttribute("d", lineD);
-      container.onmousemove = function (ev) {
-        let moveX = ev.offsetX;
-        let moveY = ev.offsetY;
-        let move = "M" + beginX + " " + beginY + " L" + moveX + " " + moveY;
-        moveLine.setAttribute("d", move);
-      };
-      container.onmouseup = function (e) {
-        lineD += " L" + e.offsetX + " " + e.offsetY;
-        lines.lastElementChild.setAttribute("d", lineD);
-        container.onmousemove = null;
-      };
-    };
+    // 自定义路径
     // rocket.onmousedown = function () {};
     // container.onmousedown = function (e) {
     //   var beginX = e.offsetX;
@@ -244,11 +372,8 @@ export default {
     //   var lineD;
     //   lines.innerHTML +=
     //     '<path id="rocket-path" stroke="#4af" stroke-dasharray="20" stroke-miterlimit="10" d="" />';
-
     //   container.onmousemove = function (ev) {
-
     //   };
-
     //   document.onmouseup = function (ev) {
     //      if (lines.lastElementChild.getAttribute("d") == "") {
     //       lineD =
@@ -275,16 +400,37 @@ export default {
   height: 3rem;
   margin-right: 0.25rem;
 }
-.button_wrap {
+#svg_wrap {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  border: 1px solid black;
   margin: 0 auto;
+}
+.button_wrap {
+  margin: 15px auto;
   display: flex;
   width: 30%;
   align-items: center;
   justify-content: space-around;
 }
-.test {
+// #container {
+//   width: 100%;
+// }
+#test {
   width: 100px;
   height: 100px;
   background-color: yellowgreen;
+}
+.lineDrawStyle{
+  width: 100%;
+  height: 100%;
+}
+//dom块中画图
+#move_wrap {
+  width: 800px;
+  height: 500px;
+  margin: 0 auto;
+  border: 1px solid black;
 }
 </style>
