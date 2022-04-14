@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2022-04-08 16:28:21
- * @LastEditTime: 2022-04-14 17:24:19
+ * @LastEditTime: 2022-04-14 17:38:59
  * @LastEditors: Please set LastEditors
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: \recorddemo\src\views\HomeView.vue
@@ -342,11 +342,12 @@ export default {
       let changeHeight =  this.choiceDom.offsetTop - addDomPosition.offsetTop;
       let changeWidth = this.choiceDom.offsetLeft - addDomPosition.offsetLeft;
       if(changeHeight < 0  || changeWidth < 0){
-        true_svg_direction.style.top =  eval(true_svg_direction.offsetTop + changeHeight) + 'px';
+      
+        true_svg_direction.style.top = eval(addDomPosition.offsetTop + changeHeight) + 'px';
         // console.log(changeWidth )
         // true_svg_direction.style.left = eval(true_svg_direction.offsetLeft + changeWidth) + 'px';
       }
-      console.log(changeWidth)
+      // console.log(changeWidth)
       true_svg_direction.style.width = Math.abs(changeWidth) + 'px';
       true_svg_direction.style.height = Math.abs(changeHeight) + 'px';
 
