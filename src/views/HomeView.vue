@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2022-04-08 16:28:21
- * @LastEditTime: 2022-04-14 17:38:59
+ * @LastEditTime: 2022-04-15 11:12:18
  * @LastEditors: Please set LastEditors
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: \recorddemo\src\views\HomeView.vue
@@ -14,33 +14,40 @@
       <button @click="controlMove('restart')">重新播放</button>
       <!-- <button @click="controlMove('reverse')">逆转播放</button> -->
       <button @click="clearDraw">清空画布</button>
-      <button @click="lineDraw">折线画图</button>
+      <button @click="lineDraw">自由画图</button>
+      <button>圆弧画图</button>
       <button @click="onlyLineDraw">直线画图</button>
       <button @click="addDom">添加</button>
       <button @click="complete">完成</button>
     </div>
 
     <div id="svg_wrap">
-      <div id="svg_content" :class="svgFlag ? '' : 'disappear'">
+      <div id="svg_content" :class="svgFlag == 0 ? '' : 'disappear'">
         <!-- 折线画布 -->
         <svg
           version="1.1"
           id="container"
-          style="border: 1px solid #000; position: relative; top: 0; left: 0"
+          style="
+            border: 1px solid #000;
+            position: relative;
+            top: 0;
+            left: 0;
+            z-index: 30;
+          "
           xmlns:svg="http://www.w3.org/2000/svg"
           xml:space="preserve"
         >
           <g id="lines" stroke="#4af" stroke-width="2" fill="none">
             <path
               stroke="#4af"
-              stroke-dasharray="20"
+              stroke-dasharray="5"
               stroke-miterlimit="5"
               d=""
               id="moveLine"
             />
             <path
               stroke="#4af"
-              stroke-dasharray="20"
+              stroke-dasharray="5"
               stroke-miterlimit="5"
               d=""
               id="rocket_path"
@@ -48,18 +55,23 @@
           </g>
         </svg>
       </div>
-      <div id="true_svg" :class="!svgFlag ? '' : 'disappear'">
+      <div id="true_svg" :class="svgFlag == 1 || svgFlag == 2 || svgFlag == 3? '' : 'disappear'" :style=" svgFlag == 3 ? 'opacity : 0' : 'opacity : 1'">
         <svg
           version="1.1"
           id="true_container"
-          style="border: 1px solid #000; position: relative"
+          style="
+            border: 1px solid #000;
+            position: relative;
+            z-index: 30;
+            pointer-events: none;
+          "
           xmlns:svg="http://www.w3.org/2000/svg"
           xml:space="preserve"
         >
           <g id="true_lines" stroke="#4af" stroke-width="2" fill="none">
             <path
               stroke="#4af"
-              stroke-dasharray="20"
+              stroke-dasharray="5"
               stroke-miterlimit="5"
               d=""
               id="true_path"
@@ -86,10 +98,9 @@ export default {
   data() {
     return {
       lines: "",
-      svgFlag: true,
+      svgFlag: 0,
       copyFlag: true,
       //拖拽
-      isDebug: true, // debug开关, 打开则在Console输出相关日志
       choiceDom: null, // 鼠标选中的DOM
       mouse: {
         // 鼠标相关属性
@@ -147,16 +158,15 @@ export default {
         // 如果没有选中的元素
         return; // 立即结束
       }
+      let domLeft =
+        this.choiceDom.offsetLeft + event.clientX - this.mouse.init.x;
+      let domTop = this.choiceDom.offsetTop + event.clientY - this.mouse.init.y;
+      this.mouse.init.x = event.clientX;
+      this.mouse.init.y = event.clientY;
+      this.choiceDom.style.left = `${domLeft}px`;
+      this.choiceDom.style.top = `${domTop}px`;
 
-      let domLeft =this.choiceDom.offsetLeft + event.clientX - this.mouse.init.x; 
-      let domTop = this.choiceDom.offsetTop + event.clientY - this.mouse.init.y; 
-      this.mouse.init.x = event.clientX; 
-      this.mouse.init.y = event.clientY; 
-      this.choiceDom.style.left = `${domLeft}px`; 
-      this.choiceDom.style.top = `${domTop}px`; 
-      
       this.copydomMove();
-
     },
     /**
      * @description: 动画移动
@@ -178,6 +188,7 @@ export default {
       }
       //创建移动实例
       let _this = this;
+      this.svgFlag = 3;
       const gsapMove = gsap.to("#adddom", {
         duration: judgeDom.getTotalLength() / 500,
         repeat: 0,
@@ -188,13 +199,15 @@ export default {
           alignOrigin: [0.5, 0.5],
         },
         onComplete: function () {
-          _this.clearDraw();
+          _this.svgFlag = 2;
+          gsapMove.pause(0);
+          
         },
       });
-      console.log(gsapMove);
       //seek 跳转到指定时间 repeat 重复几次  restart 重新播放 delay延迟 resume 继续播放而不改变方向
       switch (mode) {
         case "move":
+          this.svgFlag = 3;
           gsapMove.play();
           break;
         case "pause":
@@ -204,7 +217,6 @@ export default {
           gsapMove.restart();
           break;
         case "reverse":
-          console.log(13);
           gsapMove.reverse();
           break;
         default:
@@ -234,6 +246,7 @@ export default {
      */
     addDom() {
       let dom = document.createElement("div");
+      const _this = this;
       dom.setAttribute("id", "adddom");
       dom.style.width = "100px";
       dom.style.height = "100px";
@@ -241,8 +254,17 @@ export default {
       dom.style.position = "absolute";
       dom.style.top = "50%";
       dom.style.left = "50%";
+
       dom.style.transform = "translate(-50% , -50%)";
-      console.log(dom);
+      dom.addEventListener("mousedown", (e) => {
+        _this.onMouseDown("adddom", e);
+      });
+      dom.addEventListener("mousemove", (e) => {
+        _this.onMouseMove(e);
+      });
+      dom.addEventListener("mouseleave", (e) => {
+        _this.onMouseOut("adddom");
+      });
       const svg_wrap = document.getElementById("svg_wrap");
       svg_wrap.appendChild(dom);
     },
@@ -263,7 +285,7 @@ export default {
       let minWidth = 0,
         minHeight = 0;
       //创建画图
-      this.svgFlag = !this.svgFlag;
+      this.svgFlag = 1;
 
       let svg_wrap = document.getElementById("svg_wrap");
       let addDomPosition = document.getElementById("adddom"); //元素位置
@@ -290,7 +312,6 @@ export default {
       // let copyDom = addDomPosition;
       // copyDom.setAttribute('')
       true_path.setAttribute("d", `M0 0 ${initWidth} 80`);
-      let lineD;
       // container.onmousedown = function (e) {
       //   let beginX = e.offsetX;
       //   let beginY = e.offsetY;
@@ -328,33 +349,65 @@ export default {
       // };
     },
     /**
-     * @description: 修改path 
+     * @description: 修改path
      * @param {*}
      * @return {*}
-     */    
-    copydomMove(){
-      // let path_top = this.choiceDom.style.top - this.choiceDom.offsetHeight/2;
-      // let path_left = this.choiceDom.style.left - this.choiceDom.offsetWidth/2;
+     */
+    copydomMove() {
       let true_svg_direction = document.getElementById("true_svg");
-      let addDomPosition = document.getElementById("adddom"); //元素位置
+      let addDomPosition = document.getElementById("adddom"); //初始元素位置
       let true_path = document.getElementById("true_path");
-      
-      let changeHeight =  this.choiceDom.offsetTop - addDomPosition.offsetTop;
-      let changeWidth = this.choiceDom.offsetLeft - addDomPosition.offsetLeft;
-      if(changeHeight < 0  || changeWidth < 0){
-      
-        true_svg_direction.style.top = eval(addDomPosition.offsetTop + changeHeight) + 'px';
+      let copy_dom = document.getElementById("copy_dom");
+      //定义改变svgbox大小
+      let changeHeight, changeWidth;
+      if (this.choiceDom.getAttribute("id") == "adddom") {
+        changeHeight = copy_dom.offsetTop-this.choiceDom.offsetTop;
+        changeWidth = copy_dom.offsetLeft - this.choiceDom.offsetLeft;
+        
+        true_svg_direction.style.top = this.choiceDom.offsetTop + "px";
+        true_svg_direction.style.left = this.choiceDom.offsetLeft + "px";
+      } else {
+        changeHeight = this.choiceDom.offsetTop - addDomPosition.offsetTop;
+        changeWidth = this.choiceDom.offsetLeft - addDomPosition.offsetLeft;
+      }
+      true_svg_direction.style.width = Math.abs(changeWidth) + "px";
+      true_svg_direction.style.height = Math.abs(changeHeight) + "px";
+      //当移动到上半区域
+      if (changeHeight < 0) {
+        true_svg_direction.style.top =
+          eval(addDomPosition.offsetTop + changeHeight) + "px";
+        if (changeWidth < 0) {
+          true_svg_direction.style.left =
+            eval(addDomPosition.offsetLeft + changeWidth) + "px";
+          return true_path.setAttribute(
+            "d",
+            `M${Math.abs(changeWidth)} ${Math.abs(changeHeight)} 0 0`
+          );
+        }
+        return true_path.setAttribute(
+          "d",
+          `M0 ${Math.abs(changeHeight)}  ${Math.abs(changeWidth)} 0`
+        );
         // console.log(changeWidth )
         // true_svg_direction.style.left = eval(true_svg_direction.offsetLeft + changeWidth) + 'px';
       }
+      //当移动到下半 左区域
+      if (changeHeight >= 0 && changeWidth < 0) {
+        true_svg_direction.style.left =
+          eval(addDomPosition.offsetLeft + changeWidth) + "px";
+        return true_path.setAttribute(
+          "d",
+          `M${Math.abs(changeWidth)}  0 0 ${Math.abs(changeHeight)}`
+        );
+      }
       // console.log(changeWidth)
-      true_svg_direction.style.width = Math.abs(changeWidth) + 'px';
-      true_svg_direction.style.height = Math.abs(changeHeight) + 'px';
 
-      true_path.setAttribute('d',`M0 0 ${changeWidth} ${changeHeight}`);
-      
+      console.log(changeHeight, changeWidth);
 
-      
+      true_path.setAttribute(
+        "d",
+        `M0 0 ${Math.abs(changeWidth)} ${Math.abs(changeHeight)}`
+      );
     },
 
     /**
@@ -459,12 +512,11 @@ export default {
         }
       }
       true_path.setAttribute("d", arr.join(" ").toString());
-      this.svgFlag = !this.svgFlag;
     },
   },
 
   mounted() {
-      window.onmouseup = this.onMouseUp;  // 设置监听全窗口鼠标弹起事件
+    window.onmouseup = this.onMouseUp; // 设置监听全窗口鼠标弹起事件
     // 自定义路径
     // rocket.onmousedown = function () {};
     // container.onmousedown = function (e) {
@@ -494,9 +546,6 @@ export default {
 };
 </script>
 <style scoped lang="less">
-#true_path {
-  z-index: 1111;
-}
 .box {
   padding: 0.25rem;
   background: lightgreen;
