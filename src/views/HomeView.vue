@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2022-04-08 16:28:21
- * @LastEditTime: 2022-04-15 11:12:18
+ * @LastEditTime: 2022-04-15 17:38:28
  * @LastEditors: Please set LastEditors
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: \recorddemo\src\views\HomeView.vue
@@ -15,14 +15,17 @@
       <!-- <button @click="controlMove('reverse')">逆转播放</button> -->
       <button @click="clearDraw">清空画布</button>
       <button @click="lineDraw">自由画图</button>
-      <button>圆弧画图</button>
+      <button @click="circleDraw">圆弧画图</button>
       <button @click="onlyLineDraw">直线画图</button>
       <button @click="addDom">添加</button>
       <button @click="complete">完成</button>
     </div>
 
     <div id="svg_wrap">
-      <div id="svg_content" :class="svgFlag == 0 ? '' : 'disappear'">
+      <div
+        id="svg_content"
+        :class="svgFlag == 0 ? '' : 'disappear'"
+      >
         <!-- 折线画布 -->
         <svg
           version="1.1"
@@ -37,7 +40,12 @@
           xmlns:svg="http://www.w3.org/2000/svg"
           xml:space="preserve"
         >
-          <g id="lines" stroke="#4af" stroke-width="2" fill="none">
+          <g
+            id="lines"
+            stroke="#4af"
+            stroke-width="2"
+            fill="none"
+          >
             <path
               stroke="#4af"
               stroke-dasharray="5"
@@ -55,7 +63,11 @@
           </g>
         </svg>
       </div>
-      <div id="true_svg" :class="svgFlag == 1 || svgFlag == 2 || svgFlag == 3? '' : 'disappear'" :style=" svgFlag == 3 ? 'opacity : 0' : 'opacity : 1'">
+      <div
+        id="true_svg"
+        :class="svgFlag == 1 || svgFlag == 2 || svgFlag == 3 ? '' : 'disappear'"
+        :style="svgFlag == 3 ? 'opacity : 0' : 'opacity : 1'"
+      >
         <svg
           version="1.1"
           id="true_container"
@@ -68,7 +80,12 @@
           xmlns:svg="http://www.w3.org/2000/svg"
           xml:space="preserve"
         >
-          <g id="true_lines" stroke="#4af" stroke-width="2" fill="none">
+          <g
+            id="true_lines"
+            stroke="#4af"
+            stroke-width="2"
+            fill="none"
+          >
             <path
               stroke="#4af"
               stroke-dasharray="5"
@@ -100,6 +117,7 @@ export default {
       lines: "",
       svgFlag: 0,
       copyFlag: true,
+      ifEllipse: false,
       //拖拽
       choiceDom: null, // 鼠标选中的DOM
       mouse: {
@@ -129,7 +147,7 @@ export default {
      * @param {*}
      * @return {*}
      */
-    onMouseOut: function (domID) {
+    onMouseOut(domID) {
       // 鼠标若移动太快, 则会划出DIV, 本方法即对此事件的处理
       if (this.choiceDom === null) {
         // 如果尚未选中DOM
@@ -141,7 +159,7 @@ export default {
         this.choiceDom = null; // 则将选中的DON置空
       }
     },
-    onMouseDown: function (domID, event) {
+    onMouseDown(domID, event) {
       // 当鼠标按下某DOM
       this.choiceDom = document.getElementById(domID); // 获取dom object
 
@@ -149,11 +167,11 @@ export default {
       this.mouse.init.y = event.clientY; // 获取鼠标Y轴定位
     },
 
-    onMouseUp: function () {
+    onMouseUp() {
       // 鼠标左键弹起处理
       this.choiceDom = null; // 置空选中元素
     },
-    onMouseMove: function (event) {
+    onMouseMove(event) {
       if (this.choiceDom === null) {
         // 如果没有选中的元素
         return; // 立即结束
@@ -188,20 +206,19 @@ export default {
       }
       //创建移动实例
       let _this = this;
-      this.svgFlag = 3;
+      this.svgFlag = 3; 
       const gsapMove = gsap.to("#adddom", {
         duration: judgeDom.getTotalLength() / 500,
         repeat: 0,
         motionPath: {
-          path: "#true_path",
-          align: "#true_path",
+          path: '#true_path',
+          align: '#true_path',
           autoRotate: false,
           alignOrigin: [0.5, 0.5],
         },
         onComplete: function () {
           _this.svgFlag = 2;
           gsapMove.pause(0);
-          
         },
       });
       //seek 跳转到指定时间 repeat 重复几次  restart 重新播放 delay延迟 resume 继续播放而不改变方向
@@ -361,9 +378,9 @@ export default {
       //定义改变svgbox大小
       let changeHeight, changeWidth;
       if (this.choiceDom.getAttribute("id") == "adddom") {
-        changeHeight = copy_dom.offsetTop-this.choiceDom.offsetTop;
+        changeHeight = copy_dom.offsetTop - this.choiceDom.offsetTop;
         changeWidth = copy_dom.offsetLeft - this.choiceDom.offsetLeft;
-        
+
         true_svg_direction.style.top = this.choiceDom.offsetTop + "px";
         true_svg_direction.style.left = this.choiceDom.offsetLeft + "px";
       } else {
@@ -425,7 +442,6 @@ export default {
       svg_content.style.height = "100%";
       svg_content.style.width = "100%";
       const container = document.getElementById("container");
-      const rocket = document.getElementById("rocket");
       let lineD;
       container.onmousedown = function (e) {
         if (lines.lastElementChild.getAttribute("d") == "") {
@@ -466,6 +482,46 @@ export default {
       };
     },
 
+    /**
+     * @description: 圆弧画图
+     * @param {*}
+     * @return {*}
+     */
+    circleDraw() {
+      this.svgFlag = 1;
+      this.ifEllipse = true;
+      let true_container = document.getElementById("true_svg");
+      let addDom = document.getElementById("adddom");
+      let true_path = document.getElementById('true_path');
+      //定位
+      true_container.style.top = addDom.offsetTop - addDom.offsetHeight / 2 + "px";
+      true_container.style.left = addDom.offsetLeft + "px";
+      true_container.style.width = addDom.offsetWidth + "px";
+      true_container.style.height = addDom.offsetHeight + "px";
+      true_container.style.border = "1px dashed #5778fb";
+      //画图
+      let path = this.ellipseToPath(addDom.offsetHeight/2,addDom.offsetHeight/2,addDom.offsetHeight/2,addDom.offsetHeight/2)
+      true_path.setAttribute('d',path)
+      
+    },
+    /**
+     * @description: ellipse转path 
+     * @param {*} cx 
+     * @param {*} cy 
+     * @param {*} rx 
+     * @param {*} ry
+     * @return {*}
+     */    
+    ellipseToPath(cx, cy, rx, ry) {
+    //非数值单位计算，如当宽度像100%则移除
+      if (isNaN(cx - cy + rx - ry)) return;
+      var path =
+      'M' + (cx -rx) + ' ' + cy + ' ' +
+      'a' + rx + ' ' + ry + ' 0 1 0 ' + 2* rx + ' 0' + 
+      'a' + rx + ' ' + ry + ' 0 1 0 ' + ( -2* rx) + ' 0' +
+      'z';
+      return path;
+    },
     /**
      * @description: 完成连接线画图后，隐藏作画画布，显示动态路径画布
      * @param {*}
@@ -596,6 +652,9 @@ export default {
   display: none;
 }
 .svg_content {
+  position: relative;
+}
+#true_svg {
   position: relative;
 }
 </style>
