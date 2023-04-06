@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2022-04-08 16:28:21
- * @LastEditTime: 2022-04-15 17:38:28
- * @LastEditors: Please set LastEditors
- * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- * @FilePath: \recorddemo\src\views\HomeView.vue
--->
 <template>
   <div id="home">
     <div class="button_wrap">
@@ -68,11 +60,20 @@
         :class="svgFlag == 1 || svgFlag == 2 || svgFlag == 3 ? '' : 'disappear'"
         :style="svgFlag == 3 ? 'opacity : 0' : 'opacity : 1'"
       >
+      <div style="width:100%; height:100% ; border:1px dashed #5778fb; position:absolute;z-index:100;" v-if="ifEllipse"  v-on:mousedown="ellipseMousedown($event)"> 
+        <!-- 左边上点 -->
+        <div id='lt' style="left: -6px; top: -6px; cursor: nw-resize;width:10px;height:10px;border-radius:10px;position:absolute;z-index:100;background-color:blue"></div>
+        <!-- 右上 -->
+        <div id='rt' style="right: -6px; top: -6px; cursor: ne-resize;width:10px;height:10px;border-radius:10px;position:absolute;z-index:100;background-color:blue"></div>
+        <!-- 右下 -->
+        <div id='rb' style="inset: auto -6px -6px auto; cursor: se-resize;width:10px;height:10px;border-radius:10px;position:absolute;z-index:100;background-color:blue"></div>
+        <!-- 左下 -->
+        <div id='lb' style="left: -6px; bottom: -6px; cursor: sw-resize;width:10px;height:10px;border-radius:10px;position:absolute;z-index:100;background-color:blue"></div>
+      </div>
         <svg
           version="1.1"
           id="true_container"
           style="
-            border: 1px solid #000;
             position: relative;
             z-index: 30;
             pointer-events: none;
@@ -111,7 +112,7 @@
 // @ is an alias to /src
 import { gsap, MotionPathPlugin } from "gsap/all";
 export default {
-  name: "HomeView",
+  name: "MoveTrack",
   data() {
     return {
       lines: "",
@@ -142,6 +143,18 @@ export default {
     // }
   },
   methods: {
+    ellipseMousedown(e){
+      let dom = e.target;
+      switch (dom.getAttribute('id')) {
+        case 'lt':
+          console.log(123)
+          break;
+      
+        default:
+          break;
+      }
+      
+    },
     /**
      * @description: 绑定copydom的拖拽方法
      * @param {*}
@@ -200,6 +213,8 @@ export default {
      */
 
     controlMove(mode) {
+      // 注册移动插件
+      gsap.registerPlugin(MotionPathPlugin);
       let judgeDom = document.getElementById("true_path");
       if (judgeDom.getAttribute("d") == "") {
         return alert("没有路径");
@@ -221,6 +236,7 @@ export default {
           gsapMove.pause(0);
         },
       });
+      console.log(gsapMove)
       //seek 跳转到指定时间 repeat 重复几次  restart 重新播放 delay延迟 resume 继续播放而不改变方向
       switch (mode) {
         case "move":
@@ -493,6 +509,7 @@ export default {
       let true_container = document.getElementById("true_svg");
       let addDom = document.getElementById("adddom");
       let true_path = document.getElementById('true_path');
+      let ellipse_path = document.getElementById('ellipsePath');
       //定位
       true_container.style.top = addDom.offsetTop - addDom.offsetHeight / 2 + "px";
       true_container.style.left = addDom.offsetLeft + "px";
@@ -500,8 +517,14 @@ export default {
       true_container.style.height = addDom.offsetHeight + "px";
       true_container.style.border = "1px dashed #5778fb";
       //画图
-      let path = this.ellipseToPath(addDom.offsetHeight/2,addDom.offsetHeight/2,addDom.offsetHeight/2,addDom.offsetHeight/2)
-      true_path.setAttribute('d',path)
+      let path_cx = true_container.style.width.split('p')[0]/2,
+      path_cy = true_container.style.height.split('p')[0]/2,
+      path_rx = true_container.style.width.split('p')[0]/2,
+      path_ry = true_container.style.height.split('p')[0]/2;
+
+      let path = this.ellipseToPath(path_cx,path_cy,path_rx,path_ry)
+      true_path.setAttribute('d',path);
+      console.log(true_path)
       
     },
     /**
@@ -619,7 +642,7 @@ export default {
 .button_wrap {
   margin: 15px auto;
   display: flex;
-  width: 30%;
+  width: 40%;
   align-items: center;
   justify-content: space-around;
 }

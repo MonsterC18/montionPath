@@ -1,15 +1,28 @@
+
+
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import MoveTrack from '../views/MoveTrack.vue'
+import AudioTrack from '@/views/AudioTrack'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/',
-    name: 'home',
-    component: HomeView
+    path: '/moveTrack',
+    name: 'MoveTrack',
+    component: MoveTrack
   },
+  {
+    path:'/audioTrack',
+    name:'AudioTrack',
+    component:AudioTrack
+  },
+  {
+    path:'/gsapMove',
+    name:'GsapMove',
+    component:()=>import('../views/GsapMove.vue')
+  }
 ]
 
 const router = new VueRouter({
